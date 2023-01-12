@@ -112,7 +112,7 @@ const SingleBoardIssue: React.FC<Props> = ({
               className="mb-3 text-sm group-hover:text-theme"
               style={{ lineClamp: 3, WebkitLineClamp: 3 }}
             >
-              {issue.name}
+              {issue.name} - {issue.id}
             </h5>
           </a>
         </Link>

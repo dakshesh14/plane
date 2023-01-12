@@ -141,19 +141,38 @@ const BoardView: React.FC<Props> = ({
               const destinationStateId = destinationState?.id;
 
               // update the removed item for mutation
-              if (!destinationStateId || !destinationState) return;
-              draggedItem.state = destinationStateId;
-              draggedItem.state_detail = destinationState;
+              if (!destinationStateId || !destinationState || !draggedItem) return;
 
               // patch request
-              issuesServices.patchIssue(
-                workspaceSlug as string,
-                projectId as string,
-                draggedItem.id,
-                {
+              issuesServices
+                .patchIssue(workspaceSlug as string, projectId as string, draggedItem.id, {
                   state: destinationStateId,
-                }
-              );
+                })
+                .then((response) => {
+                  if (!workspaceSlug || !projectId) return;
+                  mutate<IssueResponse>(
+                    PROJECT_ISSUES_LIST(workspaceSlug as string, projectId as string),
+                    (prevData) => {
+                      if (!prevData) return prevData;
+                      const updatedIssues = prevData.results.map((issue) => {
+                        if (issue.id === draggedItem.id)
+                          return {
+                            ...issue,
+                            ...draggedItem,
+                            state_detail: destinationState,
+                            state: destinationStateId,
+                            ...response,
+                          };
+                        return issue;
+                      });
+                      return {
+                        ...prevData,
+                        results: updatedIssues,
+                      };
+                    },
+                    false
+                  );
+                });
 
               // mutate the issues
               if (!workspaceSlug || !projectId) return;
@@ -165,6 +184,7 @@ const BoardView: React.FC<Props> = ({
                   const updatedIssues = prevData.results.map((issue) => {
                     if (issue.id === draggedItem.id)
                       return {
+                        ...issue,
                         ...draggedItem,
                         state_detail: destinationState,
                         state: destinationStateId,
